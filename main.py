@@ -5,31 +5,29 @@ from pytube import YouTube
 
 from PyQt5.QtWidgets import *
 
-"""
-GUI Class
-
-Author: John Harris
-"""
-
 
 class YouTubeVideo():
 
-    '''
-
-    url = YouTube(str(link.get()))
-
-    video = url.streams.filter(file_extension=extension).first()
-
-    video.download()
-'''
     def __init__(self, url, path):
         self.url = url
         self.path = path
 
+    '''
+    YouTube broke the API basically, but this does work
+    https://stackoverflow.com/a/46562895/13604948
+    '''
     def downloadVideo(self):
-        yt = YouTube(self.url)
-        streams = yt.streams.get_by_itag(21)
-        streams.download(self.path)
+        print("Downloading video")
+        # YouTube(self.url).streams.first().download(self.path)
+
+    def videoData(self):
+        data = []
+        data.append(YouTube(self.url).author)
+        data.append(YouTube(self.url).title)
+        data.append(YouTube(self.url).length)
+        print("Getting data")
+        print(data)
+        return data
 
 
 class Application(QWidget):
@@ -71,14 +69,28 @@ class Application(QWidget):
         hbox = QHBoxLayout()
         downloadButton = QPushButton("Download Video")
         downloadButton.clicked.connect(
-            lambda: self.downloadVideo(urlEditText.toPlainText(), dircTextEdit.toPlainText()))
+            lambda: self.downloadVideo(urlEditText.toPlainText(), dircTextEdit.toPlainText(), author,
+                                       title, length))
         hbox.addWidget(downloadButton)
         groupBox3.setLayout(hbox)
+
+        # Groupbox 4
+        groupBox4 = QGroupBox()
+        # author, title, descr, date,  length
+        author = QLabel("Author: ")
+        title = QLabel("Title: ")
+        length = QLabel("Length: ")
+        vbox = QVBoxLayout()
+        vbox.addWidget(author)
+        vbox.addWidget(title)
+        vbox.addWidget(length)
+        groupBox4.setLayout(vbox)
 
         # Setting layouts
         gridLayout.addWidget(groupBox)
         gridLayout.addWidget(groupBox2)
         gridLayout.addWidget(groupBox3)
+        gridLayout.addWidget(groupBox4)
         self.setLayout(gridLayout)
         self.show()
 
@@ -87,12 +99,19 @@ class Application(QWidget):
         folder_path = filedialog.askdirectory()
         textedit.setPlainText(folder_path)
 
-    def downloadVideo(self, URL, directory):
+    def downloadVideo(self, URL, directory, author, title, length):
+        data = None
         if not URL and not directory:
             print("Invalid Input")
         else:
             youtube = YouTubeVideo(URL, directory)
             youtube.downloadVideo()
+            data = youtube.videoData()
+            # Use a loop
+            author.setText("Author: " + data[0])
+            title.setText("Title: " + data[1])
+            length.setText("Length: " + str(data[2]))
+
 
 
 def main():
@@ -102,46 +121,4 @@ def main():
 
 
 if __name__ == '__main__':
-    YouTube('http://youtube.com/watch?v=9bZkp7q19f0').streams[0].download()
     main()
-'''
-Error for person reading this
-
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\__main__.py", line 181, in fmt_streams
-    extract.apply_signature(stream_manifest, self.vid_info, self.js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\extract.py", line 409, in apply_signature
-    cipher = Cipher(js=js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 43, in __init__
-    self.throttling_plan = get_throttling_plan(js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 405, in get_throttling_plan
-    raw_code = get_throttling_function_code(js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 311, in get_throttling_function_code
-    name = re.escape(get_throttling_function_name(js))
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 296, in get_throttling_function_name
-    raise RegexMatchError(
-pytube.exceptions.RegexMatchError: get_throttling_function_name: could not find match for multiple
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "A:\python projects\youtube downloader\main.py", line 105, in <module>
-    YouTube('http://youtube.com/watch?v=9bZkp7q19f0').streams[0].download()
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\__main__.py", line 296, in streams
-    return StreamQuery(self.fmt_streams)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\__main__.py", line 188, in fmt_streams
-    extract.apply_signature(stream_manifest, self.vid_info, self.js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\extract.py", line 409, in apply_signature
-    cipher = Cipher(js=js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 43, in __init__
-    self.throttling_plan = get_throttling_plan(js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 405, in get_throttling_plan
-    raw_code = get_throttling_function_code(js)
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 311, in get_throttling_function_code
-    name = re.escape(get_throttling_function_name(js))
-  File "A:\python projects\youtube downloader\venv\lib\site-packages\pytube\cipher.py", line 296, in get_throttling_function_name
-    raise RegexMatchError(
-pytube.exceptions.RegexMatchError: get_throttling_function_name: could not find match for multiple
-
-Process finished with exit code 1
-
-'''
